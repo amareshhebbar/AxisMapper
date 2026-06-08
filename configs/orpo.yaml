@@ -1,0 +1,28 @@
+model:
+  name: "outputs/icd10-qlora-v1/final"  
+  max_seq_length: 512
+  load_in_4bit: true
+  dtype: "bfloat16"
+
+
+training:
+  num_train_epochs: 1                 
+  per_device_train_batch_size: 2     
+  gradient_accumulation_steps: 8      
+  learning_rate: 5e-6                
+  lr_scheduler_type: "inverse_sqrt"   
+  warmup_ratio: 0.1
+  optim: "paged_adamw_8bit"
+  bf16: true
+  gradient_checkpointing: true
+  max_seq_length: 512
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_steps: 200
+  save_total_limit: 2
+  logging_steps: 10
+  report_to: "wandb"
+
+orpo:
+  beta: 0.1                           
+  max_prompt_length: 256
