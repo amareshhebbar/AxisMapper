@@ -8,3 +8,15 @@ numpy>=1.26.0
 
 python-dotenv>=1.0.1
 tqdm>=4.66.2
+
+unsloth
+trl>=0.8.0
+peft>=0.10.0
+transformers>=4.40.0
+bitsandbytes>=0.43.0
+accelerate>=0.29.0
+datasets>=2.18.0
+wandb
+datasketch
+flash-attn      
+torch>=2.2.0
