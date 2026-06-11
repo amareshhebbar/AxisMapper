@@ -1,7 +1,6 @@
 accelerate==1.13.0
 anthropic==0.49.0
 bitsandbytes==0.49.2
-datasets==5.0.0
 datasketch==1.10.0
 numpy==2.3.5
 openai==1.109.1
@@ -14,3 +13,5 @@ transformers==5.5.0
 trl==0.24.0
 unsloth==2026.6.2
 wandb==0.27.2
+
+datasets==5.0.0
