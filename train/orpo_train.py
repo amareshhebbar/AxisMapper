@@ -1,16 +1,18 @@
+import unsloth  
+
+import json
 import os
 from pathlib import Path
 
 import torch
 import wandb
-from datasets import load_dataset
 from dotenv import load_dotenv
 from trl import ORPOConfig, ORPOTrainer
 from unsloth import FastLanguageModel, PatchDPOTrainer
 
 PatchDPOTrainer()
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR   = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 load_dotenv(PROJECT_ROOT / ".env")
@@ -18,13 +20,13 @@ load_dotenv(PROJECT_ROOT / ".env")
 if not os.getenv("HF_TOKEN") or not os.getenv("WANDB_API_KEY"):
     print("⚠️ WARNING: HF_TOKEN or WANDB_API_KEY not found in environment.")
 
-MODEL_PATH = "AmareshHebbar/icd10-coder-qwen25-7b-v1"
+MODEL_PATH  = "AmareshHebbar/icd10-coder-qwen25-7b-v1"
 MAX_SEQ_LEN = 512
-RUN_NAME = "icd10-orpo-v1"
-HF_REPO = "AmareshHebbar/icd10-coder-qwen25-7b-orpo"
+RUN_NAME    = "icd10-orpo-v1"
+HF_REPO     = "AmareshHebbar/icd10-coder-qwen25-7b-orpo"
 
 train_path = PROJECT_ROOT / "data" / "dpo" / "orpo_train.jsonl"
-val_path = PROJECT_ROOT / "data" / "dpo" / "orpo_val.jsonl"
+val_path   = PROJECT_ROOT / "data" / "dpo" / "orpo_val.jsonl"
 
 for p in [train_path, val_path]:
     if not p.exists():
@@ -41,11 +43,16 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     token=os.getenv("HF_TOKEN"),
 )
 
-dataset = load_dataset(
-    "json",
-    data_files={"train": str(train_path), "validation": str(val_path)},
-)
-print(f"ORPO Train: {len(dataset['train'])} | Val: {len(dataset['validation'])}")
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
+
+with open(train_path) as f:
+    train_list = [json.loads(l) for l in f if l.strip()]
+with open(val_path) as f:
+    val_list = [json.loads(l) for l in f if l.strip()]
+
+print(f"ORPO Train: {len(train_list)} | Val: {len(val_list)}")
 
 output_dir = PROJECT_ROOT / "outputs" / RUN_NAME
 
@@ -54,9 +61,9 @@ if os.getenv("WANDB_API_KEY"):
 
 trainer = ORPOTrainer(
     model=model,
-    tokenizer=tokenizer,
-    train_dataset=dataset["train"],
-    eval_dataset=dataset["validation"],
+    processing_class=tokenizer,
+    train_dataset=train_list,
+    eval_dataset=val_list,
     args=ORPOConfig(
         output_dir=str(output_dir),
         num_train_epochs=1,

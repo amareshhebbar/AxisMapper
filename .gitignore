@@ -1,3 +1,4 @@
 .env
 unsloth_compiled_cache/
 image.png
+outputs/

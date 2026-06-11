@@ -1,3 +1,5 @@
+import unsloth  
+
 import json
 import os
 import random
@@ -5,12 +7,11 @@ from pathlib import Path
 
 import torch
 import wandb
-from datasets import Dataset
 from dotenv import load_dotenv
 from trl import SFTConfig, SFTTrainer
 from unsloth import FastLanguageModel
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR   = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 load_dotenv(PROJECT_ROOT / ".env")
@@ -25,37 +26,31 @@ def create_continual_dataset(
     replay_ratio: float = 0.08,
     seed: int = 42,
 ) -> list[dict]:
-    """Mix new data with a replay sample of old data to prevent forgetting."""
-    random.seed(seed)  # BUG FIX: reproducible replay sampling
-
-    with open(new_data_jsonl, "r") as f:
-        new_examples = [json.loads(line) for line in f if line.strip()]
-
-    with open(old_data_jsonl, "r") as f:
-        old_examples = [json.loads(line) for line in f if line.strip()]
-
+    random.seed(seed)
+    with open(new_data_jsonl) as f:
+        new_examples = [json.loads(l) for l in f if l.strip()]
+    with open(old_data_jsonl) as f:
+        old_examples = [json.loads(l) for l in f if l.strip()]
     n_replay = int(len(new_examples) * replay_ratio)
-    replay_sample = random.sample(old_examples, min(n_replay, len(old_examples)))
-
-    combined = new_examples + replay_sample
+    replay   = random.sample(old_examples, min(n_replay, len(old_examples)))
+    combined = new_examples + replay
     random.shuffle(combined)
     return combined
 
 
 def main() -> None:
-    MODEL_PATH = "AmareshHebbar/icd10-coder-qwen25-7b-orpo-v1"
-    HF_REPO_V2 = "AmareshHebbar/icd10-coder-qwen25-7b-v2"
+    MODEL_PATH  = "AmareshHebbar/icd10-coder-qwen25-7b-orpo-v1"
+    HF_REPO_V2  = "AmareshHebbar/icd10-coder-qwen25-7b-v2"
     MAX_SEQ_LEN = 512
-    RUN_NAME = "icd10-continual-v2"
+    RUN_NAME    = "icd10-continual-v2"
 
     new_data_path = PROJECT_ROOT / "data" / "processed" / "icd11_update_train.jsonl"
     old_data_path = PROJECT_ROOT / "data" / "processed" / "train.jsonl"
 
     if not new_data_path.exists():
         print(f"⚠️  Future update data not found at {new_data_path}")
-        print("Exiting Continual Learning script early. Add the data when ICD updates happen!")
+        print("Exiting early — add the data when ICD updates happen!")
         return
-
     if not old_data_path.exists():
         raise FileNotFoundError(f"Base training data not found: {old_data_path}")
 
@@ -68,26 +63,30 @@ def main() -> None:
         token=os.getenv("HF_TOKEN"),
     )
 
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "right"
+
     model = FastLanguageModel.get_peft_model(
         model,
-        r=16,
-        lora_alpha=32,
+        r=16, lora_alpha=32,
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
                         "gate_proj", "up_proj", "down_proj"],
-        lora_dropout=0.05,
-        bias="none",
-        use_gradient_checkpointing="unsloth",
-        random_state=42,
+        lora_dropout=0, bias="none",
+        use_gradient_checkpointing="unsloth", random_state=42,
     )
 
     print("Building Continual Learning Dataset (Replay)...")
-    mixed_data = create_continual_dataset(
-        new_data_jsonl=new_data_path,
-        old_data_jsonl=old_data_path,
-        replay_ratio=0.10,
-    )
-    hf_dataset = Dataset.from_list(mixed_data)
-    print(f"Training on {len(hf_dataset)} examples...")
+    mixed_list = create_continual_dataset(new_data_path, old_data_path, replay_ratio=0.10)
+    print(f"Training on {len(mixed_list)} examples...")
+    def formatting_func(example):
+        formatted = tokenizer.apply_chat_template(
+            example["messages"],
+            tokenize=False,
+            add_generation_prompt=False,
+        )
+        
+        return [formatted] if isinstance(formatted, str) else formatted
 
     output_dir = PROJECT_ROOT / "outputs" / RUN_NAME
 
@@ -96,8 +95,9 @@ def main() -> None:
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
-        train_dataset=hf_dataset,
+        processing_class=tokenizer,
+        train_dataset=mixed_list,
+        formatting_func=formatting_func,
         args=SFTConfig(
             output_dir=str(output_dir),
             num_train_epochs=2,
@@ -110,6 +110,7 @@ def main() -> None:
             optim="paged_adamw_8bit",
             gradient_checkpointing=True,
             max_seq_length=MAX_SEQ_LEN,
+            dataset_text_field="text",
             save_steps=500,
             logging_steps=10,
             report_to="wandb",
@@ -123,7 +124,6 @@ def main() -> None:
     token = os.getenv("HF_TOKEN")
     model.push_to_hub(HF_REPO_V2, private=True, token=token)
     tokenizer.push_to_hub(HF_REPO_V2, private=True, token=token)
-
     print(f"✅ Continual update complete. Model pushed to {HF_REPO_V2}")
 
 
