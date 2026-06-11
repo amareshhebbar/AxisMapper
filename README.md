@@ -29,8 +29,8 @@ The downstream pipeline — DRG grouping, reimbursement estimation — runs on t
 
 ## Links
 
-- HuggingFace: [AmareshHebbar](https://huggingface.co/AmareshHebbar)
-- W&B: *(add run link after training)*
+- HuggingFace: [AmareshHebbar](https://huggingface.co/AmareshHebbar/icd10-coder-qwen25-7b-merged)
+- W&B: [AmareshHebbar](https://api.wandb.ai/links/amareshhebbar-/qonl6s58)
 - Data source: [CMS ICD-10-CM FY2026](https://www.cms.gov/medicare/coding-billing/icd-10-codes)
 - MS-DRG v43.1: [CMS MS-DRG Definitions](https://www.cms.gov/medicare/payment/prospective-payment-systems/acute-inpatient-pps/ms-drg-classifications-and-software)
 
