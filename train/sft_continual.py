@@ -1,13 +1,14 @@
-import os
 import json
+import os
 import random
-import torch
 from pathlib import Path
-from dotenv import load_dotenv
-from unsloth import FastLanguageModel
-from trl import SFTTrainer, SFTConfig
-from datasets import Dataset
+
+import torch
 import wandb
+from datasets import Dataset
+from dotenv import load_dotenv
+from trl import SFTConfig, SFTTrainer
+from unsloth import FastLanguageModel
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
@@ -17,26 +18,46 @@ load_dotenv(PROJECT_ROOT / ".env")
 if not os.getenv("HF_TOKEN") or not os.getenv("WANDB_API_KEY"):
     print("⚠️ WARNING: HF_TOKEN or WANDB_API_KEY not found in environment.")
 
-def create_continual_dataset(new_data_jsonl: Path, old_data_jsonl: Path, replay_ratio: float = 0.08) -> list[dict]:
-    """Mixes new dataset with a small percentage of the old dataset to prevent forgetting."""
+
+def create_continual_dataset(
+    new_data_jsonl: Path,
+    old_data_jsonl: Path,
+    replay_ratio: float = 0.08,
+    seed: int = 42,
+) -> list[dict]:
+    """Mix new data with a replay sample of old data to prevent forgetting."""
+    random.seed(seed)  # BUG FIX: reproducible replay sampling
+
     with open(new_data_jsonl, "r") as f:
         new_examples = [json.loads(line) for line in f if line.strip()]
-        
+
     with open(old_data_jsonl, "r") as f:
         old_examples = [json.loads(line) for line in f if line.strip()]
-    
+
     n_replay = int(len(new_examples) * replay_ratio)
     replay_sample = random.sample(old_examples, min(n_replay, len(old_examples)))
-    
+
     combined = new_examples + replay_sample
     random.shuffle(combined)
     return combined
 
-def main():
-    MODEL_PATH = "AmareshHebbar/icd10-coder-qwen25-7b-orpo-v1" 
+
+def main() -> None:
+    MODEL_PATH = "AmareshHebbar/icd10-coder-qwen25-7b-orpo-v1"
     HF_REPO_V2 = "AmareshHebbar/icd10-coder-qwen25-7b-v2"
     MAX_SEQ_LEN = 512
     RUN_NAME = "icd10-continual-v2"
+
+    new_data_path = PROJECT_ROOT / "data" / "processed" / "icd11_update_train.jsonl"
+    old_data_path = PROJECT_ROOT / "data" / "processed" / "train.jsonl"
+
+    if not new_data_path.exists():
+        print(f"⚠️  Future update data not found at {new_data_path}")
+        print("Exiting Continual Learning script early. Add the data when ICD updates happen!")
+        return
+
+    if not old_data_path.exists():
+        raise FileNotFoundError(f"Base training data not found: {old_data_path}")
 
     print(f"Loading previous best model ({MODEL_PATH})...")
     model, tokenizer = FastLanguageModel.from_pretrained(
@@ -44,14 +65,15 @@ def main():
         max_seq_length=MAX_SEQ_LEN,
         dtype=torch.bfloat16,
         load_in_4bit=True,
-        token=os.getenv("HF_TOKEN") 
+        token=os.getenv("HF_TOKEN"),
     )
 
     model = FastLanguageModel.get_peft_model(
         model,
         r=16,
         lora_alpha=32,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                        "gate_proj", "up_proj", "down_proj"],
         lora_dropout=0.05,
         bias="none",
         use_gradient_checkpointing="unsloth",
@@ -59,25 +81,18 @@ def main():
     )
 
     print("Building Continual Learning Dataset (Replay)...")
-    
-    new_data_path = PROJECT_ROOT / "data" / "processed" / "icd11_update_train.jsonl"
-    old_data_path = PROJECT_ROOT / "data" / "processed" / "train.jsonl"
-    
-    if not new_data_path.exists():
-        print(f"⚠️ Placeholder: Future update data not found at {new_data_path}")
-        print("Exiting Continual Learning script early. Add the data when ICD updates happen!")
-        return
-
     mixed_data = create_continual_dataset(
         new_data_jsonl=new_data_path,
         old_data_jsonl=old_data_path,
-        replay_ratio=0.10  
+        replay_ratio=0.10,
     )
-    
     hf_dataset = Dataset.from_list(mixed_data)
     print(f"Training on {len(hf_dataset)} examples...")
 
     output_dir = PROJECT_ROOT / "outputs" / RUN_NAME
+
+    if os.getenv("WANDB_API_KEY"):
+        wandb.login(key=os.getenv("WANDB_API_KEY"))
 
     trainer = SFTTrainer(
         model=model,
@@ -85,10 +100,10 @@ def main():
         train_dataset=hf_dataset,
         args=SFTConfig(
             output_dir=str(output_dir),
-            num_train_epochs=2,              
+            num_train_epochs=2,
             per_device_train_batch_size=4,
             gradient_accumulation_steps=4,
-            learning_rate=5e-5,             
+            learning_rate=5e-5,
             lr_scheduler_type="cosine",
             warmup_ratio=0.03,
             bf16=True,
@@ -102,17 +117,15 @@ def main():
         ),
     )
 
-    if os.getenv("WANDB_API_KEY"):
-        wandb.login(key=os.getenv("WANDB_API_KEY"))
-
     trainer.train()
     trainer.save_model(str(output_dir / "final"))
-    
+
     token = os.getenv("HF_TOKEN")
     model.push_to_hub(HF_REPO_V2, private=True, token=token)
     tokenizer.push_to_hub(HF_REPO_V2, private=True, token=token)
-    
+
     print(f"✅ Continual update complete. Model pushed to {HF_REPO_V2}")
+
 
 if __name__ == "__main__":
     main()
