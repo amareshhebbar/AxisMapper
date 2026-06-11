@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from transformers import TrainerCallback
 from trl import SFTConfig, SFTTrainer
 from unsloth import FastLanguageModel
+from datasets import Dataset
 
 SCRIPT_DIR   = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
@@ -160,7 +161,7 @@ trainer = SFTTrainer(
         eval_strategy="steps",
         eval_steps=200,
         save_strategy="steps",
-        save_steps=500,
+        save_steps=200,
         save_total_limit=3,
         logging_steps=10,
         report_to="wandb",
