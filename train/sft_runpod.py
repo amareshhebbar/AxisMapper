@@ -22,37 +22,30 @@ HF_ORG        = "AmareshHebbar"
 WORKSPACE     = Path("/workspace/outputs")
 
 TASKS = {
-
-    "symptom_diagnoser": {
-        "dataset": "AmareshHebbar/symptom-diagnoser-sft",
-        "model":   "unsloth/Qwen2.5-7B-Instruct",
-        "output":  "AmareshHebbar/symptom-diagnoser-qwen25-7b",
-        "max_seq": 512, "epochs": 2, "batch": 8, "grad_accum": 4, "lr": 2e-4,
-    },
-    "clinical_summarizer": {
-        "dataset": "AmareshHebbar/clinical-summarizer-sft",
-        "model":   "unsloth/Qwen2.5-7B-Instruct",
-        "output":  "AmareshHebbar/clinical-summarizer-qwen25-7b",
-        "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
-    },
-    "snomed_mapper": {
-        "dataset": "AmareshHebbar/snomed-mapper-sft",
-        "model":   "unsloth/Qwen2.5-7B-Instruct",
-        "output":  "AmareshHebbar/snomed-mapper-qwen25-7b",
-        "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
-    },
-    "discharge_qa": {
-        "dataset": "AmareshHebbar/discharge-qa-sft",
-        "model":   "unsloth/Qwen2.5-3B-Instruct",
-        "output":  "AmareshHebbar/discharge-qa-qwen25-3b",
-        "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
-    },
-    "radiology_coder": {
-        "dataset": "AmareshHebbar/radiology-coder-sft",
-        "model":   "unsloth/Qwen2.5-3B-Instruct",
-        "output":  "AmareshHebbar/radiology-coder-qwen25-3b",
-        "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
-    },
+    # "clinical_summarizer": {
+    #     "dataset": "AmareshHebbar/clinical-summarizer-sft",
+    #     "model":   "unsloth/Qwen2.5-7B-Instruct",
+    #     "output":  "AmareshHebbar/clinical-summarizer-qwen25-7b",
+    #     "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "snomed_mapper": {
+    #     "dataset": "AmareshHebbar/snomed-mapper-sft",
+    #     "model":   "unsloth/Qwen2.5-7B-Instruct",
+    #     "output":  "AmareshHebbar/snomed-mapper-qwen25-7b",
+    #     "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "discharge_qa": {
+    #     "dataset": "AmareshHebbar/discharge-qa-sft",
+    #     "model":   "unsloth/Qwen2.5-3B-Instruct",
+    #     "output":  "AmareshHebbar/discharge-qa-qwen25-3b",
+    #     "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "radiology_coder": {
+    #     "dataset": "AmareshHebbar/radiology-coder-sft",
+    #     "model":   "unsloth/Qwen2.5-3B-Instruct",
+    #     "output":  "AmareshHebbar/radiology-coder-qwen25-3b",
+    #     "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
+    # },
     "medical_ner": {
         "dataset": "AmareshHebbar/medical-ner-sft",
         "model":   "unsloth/Qwen2.5-3B-Instruct",
@@ -65,60 +58,66 @@ TASKS = {
         "output":  "AmareshHebbar/hindi-medical-qwen25-3b",
         "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
     },
-    "cpt_coder": {
-        "dataset": "AmareshHebbar/cpt-coder-sft",
-        "model":   "unsloth/Qwen2.5-3B-Instruct",
-        "output":  "AmareshHebbar/cpt-coder-qwen25-3b",
-        "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
-    },
-    "medical_billing": {
-        "dataset": "AmareshHebbar/medical-billing-sft",
-        "model":   "unsloth/Qwen2.5-3B-Instruct",
-        "output":  "AmareshHebbar/medical-billing-qwen25-3b",
-        "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
-    },
-    "pmjay_classifier": {
-        "dataset": "AmareshHebbar/pmjay-classifier-sft",
-        "model":   "unsloth/Qwen2.5-3B-Instruct",
-        "output":  "AmareshHebbar/pmjay-classifier-qwen25-3b",
-        "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
-    },
-    "pharmacy_ner": {
-        "dataset": "AmareshHebbar/pharmacy-ner-sft",
-        "model":   "unsloth/Qwen2.5-1.5B-Instruct",
-        "output":  "AmareshHebbar/pharmacy-ner-qwen25-1b",
-        "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
-    },
-    "ayurveda_icd": {
-        "dataset": "AmareshHebbar/ayurveda-icd-sft",
-        "model":   "unsloth/Qwen2.5-1.5B-Instruct",
-        "output":  "AmareshHebbar/ayurveda-icd-qwen25-1b",
-        "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
-    },
-    "insurance_classifier": {
-        "dataset": "AmareshHebbar/insurance-classifier-sft",
-        "model":   "unsloth/Qwen2.5-1.5B-Instruct",
-        "output":  "AmareshHebbar/insurance-classifier-qwen25-1b",
-        "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
-    },
-    "icd10_to_drg": {
-        "dataset": "AmareshHebbar/icd10-to-drg-sft",
-        "model":   "unsloth/Qwen2.5-1.5B-Instruct",
-        "output":  "AmareshHebbar/icd10-to-drg-qwen25-1b",
-        "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
-    },
+    # "cpt_coder": {
+    #     "dataset": "AmareshHebbar/cpt-coder-sft",
+    #     "model":   "unsloth/Qwen2.5-3B-Instruct",
+    #     "output":  "AmareshHebbar/cpt-coder-qwen25-3b",
+    #     "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "medical_billing": {
+    #     "dataset": "AmareshHebbar/medical-billing-sft",
+    #     "model":   "unsloth/Qwen2.5-3B-Instruct",
+    #     "output":  "AmareshHebbar/medical-billing-qwen25-3b",
+    #     "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "pmjay_classifier": {
+    #     "dataset": "AmareshHebbar/pmjay-classifier-sft",
+    #     "model":   "unsloth/Qwen2.5-3B-Instruct",
+    #     "output":  "AmareshHebbar/pmjay-classifier-qwen25-3b",
+    #     "max_seq": 512, "epochs": 3, "batch": 12, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "pharmacy_ner": {
+    #     "dataset": "AmareshHebbar/pharmacy-ner-sft",
+    #     "model":   "unsloth/Qwen2.5-1.5B-Instruct",
+    #     "output":  "AmareshHebbar/pharmacy-ner-qwen25-1b",
+    #     "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "ayurveda_icd": {
+    #     "dataset": "AmareshHebbar/ayurveda-icd-sft",
+    #     "model":   "unsloth/Qwen2.5-1.5B-Instruct",
+    #     "output":  "AmareshHebbar/ayurveda-icd-qwen25-1b",
+    #     "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "insurance_classifier": {
+    #     "dataset": "AmareshHebbar/insurance-classifier-sft",
+    #     "model":   "unsloth/Qwen2.5-1.5B-Instruct",
+    #     "output":  "AmareshHebbar/insurance-classifier-qwen25-1b",
+    #     "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
+    # },
+    # "icd10_to_drg": {
+    #     "dataset": "AmareshHebbar/icd10-to-drg-sft",
+    #     "model":   "unsloth/Qwen2.5-1.5B-Instruct",
+    #     "output":  "AmareshHebbar/icd10-to-drg-qwen25-1b",
+    #     "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
+    # },
     "loinc_coder": {
         "dataset": "AmareshHebbar/loinc-coder-sft",
         "model":   "unsloth/Qwen2.5-1.5B-Instruct",
         "output":  "AmareshHebbar/loinc-coder-qwen25-1b",
         "max_seq": 512, "epochs": 3, "batch": 16, "grad_accum": 4, "lr": 2e-4,
     },
-        "icd10_coder": {
-        "dataset": "AmareshHebbar/icd10-coder-sft",
+     "symptom_diagnoser": {
+        "dataset": "AmareshHebbar/symptom-diagnoser-sft",
         "model":   "unsloth/Qwen2.5-7B-Instruct",
-        "output":  "AmareshHebbar/icd10-coder-qwen25-7b",
-        "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
+        "output":  "AmareshHebbar/symptom-diagnoser-qwen25-7b",
+        "max_seq": 512, "epochs": 2, "batch": 8, "grad_accum": 4, "lr": 2e-4,
     },
+    #     "icd10_coder": {
+    #     "dataset": "AmareshHebbar/icd10-coder-sft",
+    #     "model":   "unsloth/Qwen2.5-7B-Instruct",
+    #     "output":  "AmareshHebbar/icd10-coder-qwen25-7b",
+    #     "max_seq": 512, "epochs": 1, "batch": 8, "grad_accum": 4, "lr": 2e-4,
+    # },
 }
 
 def fmt_time(seconds):
