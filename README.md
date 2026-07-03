@@ -165,3 +165,5 @@ train/          SFT local, SFT RunPod, ORPO, merge/export, continual
 ```
 
 
+
+<!-- docs pass: 2026-07-03T04:32:43Z -->
